@@ -1,10 +1,10 @@
-mod todo;
 mod storage;
+mod todo;
 
-use todo::Todo;
-use storage::{load_todos, save_todos};
+use ::chrono::Utc;
 use clap::{Parser, Subcommand};
-use::chrono::Utc;
+use storage::{load_todos, save_todos};
+use todo::Todo;
 
 #[derive(Parser)]
 #[command(name = "todo")]
@@ -12,24 +12,18 @@ use::chrono::Utc;
 #[command(about = "Todo CLI App")]
 struct Cli {
     #[command(subcommand)]
-    command : Commands,
+    command: Commands,
 }
 
 #[derive(Subcommand)]
 enum Commands {
-    Add {
-        text: String,
-    },
-    
+    Add { text: String },
+
     List,
 
-    Done {
-        id: u32,
-    },
+    Done { id: u32 },
 
-    Delete {
-        id: u32,
-    },
+    Delete { id: u32 },
 }
 
 fn main() {
@@ -39,17 +33,17 @@ fn main() {
         Commands::Add { text } => {
             let mut todos = load_todos();
 
-            let new_id : u32 = if todos.is_empty(){
+            let new_id: u32 = if todos.is_empty() {
                 1
             } else {
                 todos.iter().map(|t| t.id).max().unwrap() + 1
             };
 
             let new_todo = Todo {
-                id : new_id,
-                text : text.clone(),
-                completed : false,
-                created_at : Utc::now(),
+                id: new_id,
+                text: text.clone(),
+                completed: false,
+                created_at: Utc::now(),
             };
 
             todos.push(new_todo);
@@ -69,11 +63,11 @@ fn main() {
 
             println!("\n Your Todos: ");
             println!("-----------------");
-            
+
             for todo in &todos {
                 let status = if todo.completed { "x" } else { " " };
                 println!("{}. [{}] {}", todo.id, status, todo.text);
-            };
+            }
 
             println!("-----------------");
 
@@ -95,7 +89,8 @@ fn main() {
 
                     save_todos(&todos);
                     println!("Marked as done: {}", text);
-                } None => {
+                }
+                None => {
                     println!("Todo with ID {} not found", id);
                 }
             }
@@ -104,13 +99,15 @@ fn main() {
         Commands::Delete { id } => {
             let mut todos = load_todos();
 
-            let todo = todos.iter().position(|t| t.id == id);
+            let index = todos.iter().position(|t| t.id == id);
 
-            match todo {
-                Some (todo) => {
-                    todos.remove(todo);
+            match index {
+                Some(index) => {
+                    let removed = todos.remove(index);
                     save_todos(&todos);
-                } None => {
+                    println!("Deleted: {}", removed.text);
+                }
+                None => {
                     println!("Todo with ID {} not found", id);
                 }
             }
